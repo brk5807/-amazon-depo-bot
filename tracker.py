@@ -66,7 +66,8 @@ with sync_playwright() as p:
     cards = page.locator("div[data-component-type='s-search-result']")
 
     count = cards.count()
-
+    send(f"Bulunan ürün sayısı: {count}")
+    
     found = []
 
     for i in range(count):
