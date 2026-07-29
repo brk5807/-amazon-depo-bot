@@ -11,26 +11,37 @@ headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
-response = requests.get(URL, headers=headers, timeout=30)
-soup = BeautifulSoup(response.text, "html.parser")
+try:
+    response = requests.get(URL, headers=headers, timeout=20)
+    soup = BeautifulSoup(response.text, "html.parser")
 
-products = soup.select("h2 a")
+    products = soup.select("h2 a")
 
-if not products:
-    text = "❌ Amazon sayfasında ürün bulunamadı."
-else:
-    text = "🖥️ Amazon Depo Bilgisayar Bileşenleri\n\n"
+    if not products:
+        text = "❌ Amazon sayfasında ürün bulunamadı."
+    else:
+        text = "🖥 Amazon Türkiye Depo - Bilgisayar Bileşenleri\n\n"
 
-    for p in products[:10]:
-        name = p.get_text(strip=True)
-        link = "https://www.amazon.com.tr" + p["href"]
-        text += f"• {name}\n{link}\n\n"
+        for p in products[:10]:
+            name = p.get_text(strip=True)
+            href = p.get("href")
+
+            if href:
+                if href.startswith("/"):
+                    link = "https://www.amazon.com.tr" + href
+                else:
+                    link = href
+
+                text += f"• {name}\n{link}\n\n"
+
+except Exception as e:
+    text = f"❌ Hata oluştu:\n{e}"
 
 requests.post(
     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
     json={
         "chat_id": CHAT_ID,
-        "text": text[:4000]
+        "text": text
     },
-    timeout=30
+    timeout=20
 )
