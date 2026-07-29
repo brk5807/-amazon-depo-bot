@@ -13,8 +13,23 @@ headers = {
 
 try:
     response = requests.get(URL, headers=headers, timeout=20)
-    soup = BeautifulSoup(response.text, "html.parser")
 
+    debug = (
+        f"Status: {response.status_code}\n"
+        f"URL: {response.url}\n\n"
+        f"{response.text[:1000]}"
+    )
+
+    requests.post(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+        json={
+            "chat_id": CHAT_ID,
+            "text": debug[:4000]
+        },
+        timeout=20
+    )
+
+    soup = BeautifulSoup(response.text, "html.parser")
     products = soup.select("h2 a")
 
     if not products:
@@ -28,20 +43,18 @@ try:
 
             if href:
                 if href.startswith("/"):
-                    link = "https://www.amazon.com.tr" + href
-                else:
-                    link = href
+                    href = "https://www.amazon.com.tr" + href
 
-                text += f"• {name}\n{link}\n\n"
+                text += f"• {name}\n{href}\n\n"
 
 except Exception as e:
-    text = f"❌ Hata oluştu:\n{e}"
+    text = f"❌ Hata:\n{e}"
 
 requests.post(
     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
     json={
         "chat_id": CHAT_ID,
-        "text": text
+        "text": text[:4000]
     },
     timeout=20
 )
