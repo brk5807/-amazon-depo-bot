@@ -1,6 +1,6 @@
+import os
 import requests
 from bs4 import BeautifulSoup
-import os
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -11,25 +11,26 @@ headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
-def send_message(text):
-    requests.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-        json={
-            "chat_id": CHAT_ID,
-            "text": text
-        },
-        timeout=20
-    )
+response = requests.get(URL, headers=headers, timeout=30)
+soup = BeautifulSoup(response.text, "html.parser")
 
-try:
-    r = requests.get(URL, headers=headers, timeout=20)
-    soup = BeautifulSoup(r.text, "lxml")
+products = soup.select("h2 a")
 
-    products = soup.select("[data-component-type='s-search-result']")
+if not products:
+    text = "❌ Amazon sayfasında ürün bulunamadı."
+else:
+    text = "🖥️ Amazon Depo Bilgisayar Bileşenleri\n\n"
 
-    send_message(
-        f"✅ Amazon sayfasına bağlanıldı.\n📦 Bulunan ürün sayısı: {len(products)}"
-    )
+    for p in products[:10]:
+        name = p.get_text(strip=True)
+        link = "https://www.amazon.com.tr" + p["href"]
+        text += f"• {name}\n{link}\n\n"
 
-except Exception as e:
-    send_message(f"❌ Hata oluştu:\n{e}")
+requests.post(
+    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+    json={
+        "chat_id": CHAT_ID,
+        "text": text[:4000]
+    },
+    timeout=30
+)
